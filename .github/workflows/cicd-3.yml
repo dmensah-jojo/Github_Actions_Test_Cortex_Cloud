@@ -1,0 +1,63 @@
+name: Cortex CLI Image Scan
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  CORTEX_API_KEY: ${{ secrets.CORTEX_API_KEY }}
+  CORTEX_API_KEY_ID: ${{ secrets.CORTEX_API_KEY_ID }}
+  CORTEX_API_URL: https://api-justruntime.xdr.us.paloaltonetworks.com
+  IMAGE_NAME: docerleo/pcc_sandbox_analysis:latest
+
+jobs:
+  cortex-image-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify Node.js Version
+        run: node -v
+
+      - name: Download Cortex CLI
+        run: |
+          set -x
+          crtx_resp=$(curl "${CORTEX_API_URL}/public_api/v1/unified-cli/releases/download-link?os=linux&architecture=amd64" \
+            -H "x-xdr-auth-id: ${CORTEX_API_KEY_ID}" \
+            -H "Authorization: ${CORTEX_API_KEY}")
+
+          crtx_url=$(echo "$crtx_resp" | jq -r ".signed_url")
+
+          curl -o cortexcli "$crtx_url"
+          chmod +x cortexcli
+          ./cortexcli --version
+
+      - name: Login to Nexus Repository
+        run: |
+          echo "${{ secrets.NEXUS_PASSWORD }}" | docker login ${{ secrets.NEXUS_REGISTRY_URL }} \
+            -u "${{ secrets.NEXUS_USERNAME }}" \
+            --password-stdin
+
+      - name: Pull Vulnerable Container Image from Nexus
+        run: |
+          docker pull "${IMAGE_NAME}"
+
+      - name: Run Cortex CLI Image Scan
+        run: |
+          ./cortexcli \
+            --api-base-url "${CORTEX_API_URL}" \
+            --api-key "${CORTEX_API_KEY}" \
+            --api-key-id "${CORTEX_API_KEY_ID}" \
+            image scan \
+            --name dmensah-asha-test-2 \
+            --timeout 90 \
+            "${IMAGE_NAME}"
