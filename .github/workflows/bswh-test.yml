@@ -1,4 +1,4 @@
-name: BSWH TEST Cortex CLI Code scan
+name: BSWH TEST Cortex CLI Code scan 0
 on:
   push:
     branches:
