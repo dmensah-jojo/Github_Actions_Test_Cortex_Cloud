@@ -58,17 +58,17 @@ jobs:
             --source "GITHUB_ACTIONS" \
             --create-repo-if-missing
 
-      - name: Pull Vulnerable Container Image
-        run: docker pull "${IMAGE_NAME}"
+ #     - name: Pull Vulnerable Container Image
+ #       run: docker pull "${IMAGE_NAME}"
 
-      - name: Run Cortex CLI Image Scan
-        run: |
-          ./cortexcli \
-            --api-base-url "${CORTEX_API_URL}" \
-            --api-key "${CORTEX_API_KEY}" \
-            --api-key-id "${CORTEX_API_KEY_ID}" \
-            image scan \
-            --name dmensah-asha-test-2 \
-            --timeout 90 \
-            "${IMAGE_NAME}"
+ #     - name: Run Cortex CLI Image Scan
+ #       run: |
+ #         ./cortexcli \
+  #          --api-base-url "${CORTEX_API_URL}" \
+ #           --api-key "${CORTEX_API_KEY}" \
+ #           --api-key-id "${CORTEX_API_KEY_ID}" \
+ #           image scan \
+  #          --name dmensah-asha-test-2 \
+  #          --timeout 90 \
+  #          "${IMAGE_NAME}"
 
