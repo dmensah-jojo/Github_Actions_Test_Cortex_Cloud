@@ -10,7 +10,8 @@ env:
   CORTEX_API_KEY: ${{ secrets.CORTEX_API_KEY }}
   CORTEX_API_KEY_ID: ${{ secrets.CORTEX_API_KEY_ID }}
   CORTEX_API_URL: https://api-justruntime.xdr.us.paloaltonetworks.com
-  IMAGE_NAME: docerleo/pcc_sandbox_analysis:latest
+#  IMAGE_NAME: docerleo/pcc_sandbox_analysis:latest
+  IMAGE_NAME: nginx:latest
 
 jobs:
   cortex-cli-scan:
@@ -68,6 +69,6 @@ jobs:
             --api-key "${CORTEX_API_KEY}" \
             --api-key-id "${CORTEX_API_KEY_ID}" \
             image scan \
-            --name dmensah-asha-test-2 \
+            --name dmensah-test-2 \
             --timeout 90 \
             "${IMAGE_NAME}"
