@@ -1,4 +1,4 @@
-name: BSWH-new-Test-build #1
+name: Test-build #1
 
 on:
   push:
