@@ -1,4 +1,4 @@
-name: Yor Auto-Taggings
+name: Yor Auto-Tagging
 
 on:
   push:
