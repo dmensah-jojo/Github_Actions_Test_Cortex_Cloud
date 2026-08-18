@@ -1,0 +1,27 @@
+name: Yor Auto-Tagging
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  yor:
+    name: Run Yor Auto-Tagging
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Yor
+        uses: bridgecrewio/yor-action@main
