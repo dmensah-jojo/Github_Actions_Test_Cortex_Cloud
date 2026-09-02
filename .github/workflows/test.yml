@@ -11,7 +11,7 @@ env:
   CORTEX_API_KEY_ID: ${{ secrets.CORTEX_API_KEY_ID }}
   CORTEX_API_URL: https://api-justruntime.xdr.us.paloaltonetworks.com
   IMAGE_NAME: docerleo/pcc_sandbox_analysis:latest
- # IMAGE_NAME: nginx:latest
+  # IMAGE_NAME: nginx:latest
 
 jobs:
   cortex-cli-scan:
@@ -27,48 +27,72 @@ jobs:
           node-version: 22
 
       - name: Verify Node.js Version
-        run: node -v
+        run: |
+          node --version
+          npm --version
 
       - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
 
       - name: Download Cortex CLI
+        shell: bash
         run: |
           set -euo pipefail
 
-          crtx_resp=$(curl -sSL "${CORTEX_API_URL}/public_api/v1/unified-cli/releases/download-link?os=linux&architecture=amd64" \
+          echo "Downloading Cortex CLI..."
+
+          crtx_resp=$(curl -fsSL \
+            "${CORTEX_API_URL}/public_api/v1/unified-cli/releases/download-link?os=linux&architecture=amd64" \
             -H "x-xdr-auth-id: ${CORTEX_API_KEY_ID}" \
             -H "Authorization: ${CORTEX_API_KEY}")
 
-          crtx_url=$(echo "$crtx_resp" | jq -r ".signed_url")
+          crtx_url=$(echo "${crtx_resp}" | jq -r '.signed_url')
 
-          curl -sSL -o cortexcli "$crtx_url"
+          if [[ -z "${crtx_url}" || "${crtx_url}" == "null" ]]; then
+            echo "ERROR: Cortex CLI signed_url was not returned."
+            echo "${crtx_resp}" | jq .
+            exit 1
+          fi
+
+          curl -fsSL -o cortexcli "${crtx_url}"
+
           chmod +x cortexcli
+
+          echo "Cortex CLI version:"
           ./cortexcli --version
 
       - name: Run Cortex CLI Code Scan
+        shell: bash
         run: |
+          set -euo pipefail
+
           ./cortexcli \
             --api-base-url "${CORTEX_API_URL}" \
             --api-key "${CORTEX_API_KEY}" \
             --api-key-id "${CORTEX_API_KEY_ID}" \
             code scan \
-            --directory "${{ github.workspace }}" \
-            --repo-id "${{ github.repository }}" \
-            --branch "${{ github.ref_name }}" \
+            --directory "${GITHUB_WORKSPACE}" \
+            --repo-id "${GITHUB_REPOSITORY}" \
+            --branch "${GITHUB_REF_NAME}" \
             --source "GITHUB_ACTIONS" \
             --create-repo-if-missing
 
       - name: Pull Vulnerable Container Image
-        run: docker pull "${IMAGE_NAME}"
+        run: |
+          docker pull "${IMAGE_NAME}"
 
       - name: Run Cortex CLI Image Scan
+        shell: bash
         run: |
+          set -euo pipefail
+
           ./cortexcli \
             --api-base-url "${CORTEX_API_URL}" \
             --api-key "${CORTEX_API_KEY}" \
             --api-key-id "${CORTEX_API_KEY_ID}" \
             image scan \
-            --name dmensah-test \
+            --name "dmensah-test" \
             --timeout 90 \
             "${IMAGE_NAME}"
